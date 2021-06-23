@@ -5,7 +5,6 @@ import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.dto.CountryDto
 import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.dto.FilmDto
 import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.resolver.CinemaSubscriptionResolver
 import io.github.ermadmi78.kobby.cinema.server.eventbus.EventBus
-import io.github.ermadmi78.kobby.cinema.server.security.hasAnyRole
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
@@ -18,15 +17,10 @@ import org.springframework.stereotype.Component
  */
 @Component
 class SubscriptionResolver(private val eventBus: EventBus) : CinemaSubscriptionResolver {
-    override suspend fun countryCreated(): Publisher<CountryDto> = hasAnyRole("USER", "ADMIN") {
-        println(
-            "Subscription on country created by user [${authentication.name}] " +
-                    "in thread [${Thread.currentThread().name}]"
-        )
+    override suspend fun countryCreated(): Publisher<CountryDto> =
         eventBus.countryCreatedFlow().asPublisher()
-    }
 
-    override suspend fun filmCreated(countryId: Long?): Publisher<FilmDto> = hasAnyRole("USER", "ADMIN") {
+    override suspend fun filmCreated(countryId: Long?): Publisher<FilmDto> {
         var filmCreatedFlow = eventBus.filmCreatedFlow()
         if (countryId != null) {
             filmCreatedFlow = filmCreatedFlow.filter {
@@ -34,10 +28,10 @@ class SubscriptionResolver(private val eventBus: EventBus) : CinemaSubscriptionR
             }
         }
 
-        filmCreatedFlow.asPublisher()
+        return filmCreatedFlow.asPublisher()
     }
 
-    override suspend fun actorCreated(countryId: Long?): Publisher<ActorDto> = hasAnyRole("USER", "ADMIN") {
+    override suspend fun actorCreated(countryId: Long?): Publisher<ActorDto> {
         var actorCreatedFlow = eventBus.actorCreatedFlow()
         if (countryId != null) {
             actorCreatedFlow = actorCreatedFlow.filter {
@@ -45,6 +39,6 @@ class SubscriptionResolver(private val eventBus: EventBus) : CinemaSubscriptionR
             }
         }
 
-        actorCreatedFlow.asPublisher()
+        return actorCreatedFlow.asPublisher()
     }
 }

@@ -1,27 +1,15 @@
 package io.github.ermadmi78.kobby.cinema.server
 
-import graphql.kickstart.spring.webflux.GraphQLSpringWebfluxContextBuilder
 import graphql.kickstart.tools.CoroutineContextProvider
 import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLScalarType
 import io.github.ermadmi78.kobby.cinema.server.resolvers.QueryResolver
-import io.github.ermadmi78.kobby.cinema.server.security.SecuredGraphQLContextBuilder
-import io.github.ermadmi78.kobby.cinema.server.security.getBasicAuthentication
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.reactive.awaitSingle
 import org.apache.commons.lang3.concurrent.BasicThreadFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
-import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.reactive.config.EnableWebFlux
 import org.springframework.web.reactive.function.server.RouterFunctions.resources
 import java.util.concurrent.Executors
@@ -35,7 +23,6 @@ import kotlin.coroutines.CoroutineContext
 
 @Configuration
 @EnableWebFlux
-@EnableWebFluxSecurity
 class ApplicationConfiguration {
     /**
      * Static http resources for GraphIQL (http://localhost:8080/graphiql)
@@ -78,64 +65,4 @@ class ApplicationConfiguration {
                 return resolverDispatcher
             }
         }
-
-    /**
-     * Reactive Basic HTTP security configuration
-     *
-     * Apollo Client does not use HTTP headers to send authentication token.
-     * Instead it sends token in payload of GQL_CONNECTION_INIT message.
-     * So, we have to switch off Spring Boot authentication checking of 'subscriptions' endpoint
-     * and authenticate subscription manually in [SecuredGraphQLContextBuilder]
-     *
-     * See:
-     *
-     * https://www.apollographql.com/docs/react/data/subscriptions/#5-authenticate-over-websocket-optional
-     *
-     * https://github.com/apollographql/subscriptions-transport-ws/blob/master/PROTOCOL.md
-     */
-    @Bean
-    fun securityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http
-            .csrf().disable()
-            .authorizeExchange()
-            .pathMatchers("/graphiql").permitAll()  // Permit GraphIQL (http://localhost:8080/graphiql)
-            .pathMatchers("/vendor/**").permitAll() // Permit GraphIQL static resources
-            .pathMatchers("/subscriptions").permitAll() // See 'securityFilterChain` method documentation
-            .anyExchange().authenticated()
-            .and()
-            .httpBasic()
-            .and()
-            .formLogin().disable()
-            .build()
-    }
-
-    /**
-     * Basic HTTP users configuration
-     */
-    @Bean
-    fun userDetailsService(): ReactiveUserDetailsService {
-        val user: UserDetails = User.builder()
-            .username("user")
-            .password("{noop}user")
-            .roles("USER")
-            .build()
-        val admin: UserDetails = User.builder()
-            .username("admin")
-            .password("{noop}admin")
-            .roles("ADMIN")
-            .build()
-        return MapReactiveUserDetailsService(user, admin)
-    }
-
-    /**
-     * GraphQL security configuration
-     */
-    @Bean
-    fun contextBuilder(userDetailsService: ReactiveUserDetailsService): GraphQLSpringWebfluxContextBuilder {
-        return SecuredGraphQLContextBuilder { header ->
-            header.getBasicAuthentication()
-                ?.let { userDetailsService.findByUsername(it.name).awaitSingle() }
-                ?.let { UsernamePasswordAuthenticationToken(it, it.password, it.authorities) }
-        }
-    }
 }

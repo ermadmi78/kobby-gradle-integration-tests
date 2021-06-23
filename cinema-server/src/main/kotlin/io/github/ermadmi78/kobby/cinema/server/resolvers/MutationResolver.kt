@@ -4,7 +4,6 @@ import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.dto.*
 import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.resolver.CinemaMutationResolver
 import io.github.ermadmi78.kobby.cinema.server.eventbus.EventBus
 import io.github.ermadmi78.kobby.cinema.server.jooq.Tables.*
-import io.github.ermadmi78.kobby.cinema.server.security.hasAnyRole
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.springframework.stereotype.Component
@@ -19,11 +18,7 @@ class MutationResolver(
     private val dslContext: DSLContext,
     private val eventBus: EventBus
 ) : CinemaMutationResolver {
-    override suspend fun createCountry(name: String): CountryDto = hasAnyRole("ADMIN") {
-        println(
-            "Mutation create country by user [${authentication.name}] " +
-                    "in thread [${Thread.currentThread().name}]"
-        )
+    override suspend fun createCountry(name: String): CountryDto {
         val newCountry = dslContext.insertInto(COUNTRY)
             .set(COUNTRY.NAME, name)
             .returning()
@@ -31,14 +26,14 @@ class MutationResolver(
             .toDto()
 
         eventBus.fireCountryCreated(newCountry)
-        newCountry
+        return newCountry
     }
 
     override suspend fun createFilm(
         countryId: Long,
         film: FilmInput,
         tags: TagInput?
-    ): FilmDto = hasAnyRole("ADMIN") {
+    ): FilmDto {
         val newFilm = dslContext.insertInto(FILM)
             .set(FILM.COUNTRY_ID, countryId)
             .set(FILM.TITLE, film.title)
@@ -49,14 +44,14 @@ class MutationResolver(
             .toDto()
 
         eventBus.fireFilmCreated(newFilm)
-        newFilm
+        return newFilm
     }
 
     override suspend fun createActor(
         countryId: Long,
         actor: ActorInput,
         tags: TagInput?
-    ): ActorDto = hasAnyRole("ADMIN") {
+    ): ActorDto {
         val newActor = dslContext.insertInto(ACTOR)
             .set(ACTOR.COUNTRY_ID, countryId)
             .set(ACTOR.FIRST_NAME, actor.firstName)
@@ -69,39 +64,35 @@ class MutationResolver(
             .toDto()
 
         eventBus.fireActorCreated(newActor)
-        newActor
+        return newActor
     }
 
     override suspend fun associate(
         filmId: Long,
         actorId: Long
-    ): Boolean = hasAnyRole("ADMIN") {
-        dslContext.insertInto(FILM_ACTOR)
-            .set(FILM_ACTOR.FILM_ID, filmId)
-            .set(FILM_ACTOR.ACTOR_ID, actorId)
-            .onDuplicateKeyIgnore()
-            .execute() == 1
-    }
+    ): Boolean = dslContext
+        .insertInto(FILM_ACTOR)
+        .set(FILM_ACTOR.FILM_ID, filmId)
+        .set(FILM_ACTOR.ACTOR_ID, actorId)
+        .onDuplicateKeyIgnore()
+        .execute() == 1
 
     override suspend fun tagFilm(
         filmId: Long,
         tagValue: String
-    ): Boolean = hasAnyRole("ADMIN") {
-        dslContext.update(FILM)
-            .set(FILM.TAGS, DSL.function("ARRAY_APPEND", FILM.TAGS.dataType, FILM.TAGS, DSL.`val`(tagValue)))
-            .where(FILM.ID.eq(filmId))
-            .and(filmTagsContains(tagValue).not())
-            .execute() == 1
-    }
+    ): Boolean = dslContext.update(FILM)
+        .set(FILM.TAGS, DSL.function("ARRAY_APPEND", FILM.TAGS.dataType, FILM.TAGS, DSL.`val`(tagValue)))
+        .where(FILM.ID.eq(filmId))
+        .and(filmTagsContains(tagValue).not())
+        .execute() == 1
 
     override suspend fun tagActor(
         actorId: Long,
         tagValue: String
-    ): Boolean = hasAnyRole("ADMIN") {
-        dslContext.update(ACTOR)
-            .set(ACTOR.TAGS, DSL.function("ARRAY_APPEND", ACTOR.TAGS.dataType, ACTOR.TAGS, DSL.`val`(tagValue)))
-            .where(ACTOR.ID.eq(actorId))
-            .and(actorTagsContains(tagValue).not())
-            .execute() == 1
-    }
+    ): Boolean = dslContext
+        .update(ACTOR)
+        .set(ACTOR.TAGS, DSL.function("ARRAY_APPEND", ACTOR.TAGS.dataType, ACTOR.TAGS, DSL.`val`(tagValue)))
+        .where(ACTOR.ID.eq(actorId))
+        .and(actorTagsContains(tagValue).not())
+        .execute() == 1
 }

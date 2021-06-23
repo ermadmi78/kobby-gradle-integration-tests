@@ -6,7 +6,6 @@ import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.dto.FilmDto
 import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.dto.Genre
 import io.github.ermadmi78.kobby.cinema.api.kobby.kotlin.resolver.CinemaActorResolver
 import io.github.ermadmi78.kobby.cinema.server.jooq.Tables.*
-import io.github.ermadmi78.kobby.cinema.server.security.hasAnyRole
 import org.jooq.DSLContext
 import org.jooq.impl.DSL.trueCondition
 import org.springframework.stereotype.Component
@@ -40,11 +39,10 @@ class ActorResolver(private val dslContext: DSLContext) : CinemaActorResolver {
         return result
     }
 
-    override suspend fun country(actor: ActorDto): CountryDto = hasAnyRole("USER", "ADMIN") {
-        dslContext.selectFrom(COUNTRY)
-            .where(COUNTRY.ID.eq(actor.countryId))
-            .fetchAny { it.toDto() }!!
-    }
+    override suspend fun country(actor: ActorDto): CountryDto = dslContext
+        .selectFrom(COUNTRY)
+        .where(COUNTRY.ID.eq(actor.countryId))
+        .fetchAny { it.toDto() }!!
 
     override suspend fun films(
         actor: ActorDto,
@@ -52,16 +50,15 @@ class ActorResolver(private val dslContext: DSLContext) : CinemaActorResolver {
         genre: Genre?,
         limit: Int,
         offset: Int
-    ): List<FilmDto> = hasAnyRole("USER", "ADMIN") {
-        dslContext.select(FILM.asterisk())
-            .from(FILM)
-            .join(FILM_ACTOR)
-            .onKey()
-            .where(FILM_ACTOR.ACTOR_ID.eq(actor.id))
-            .and(trueCondition().andFilms(title, genre))
-            .limit(offset.prepare(), limit.prepare())
-            .fetch {
-                it.into(FILM).toDto()
-            }
-    }
+    ): List<FilmDto> = dslContext
+        .select(FILM.asterisk())
+        .from(FILM)
+        .join(FILM_ACTOR)
+        .onKey()
+        .where(FILM_ACTOR.ACTOR_ID.eq(actor.id))
+        .and(trueCondition().andFilms(title, genre))
+        .limit(offset.prepare(), limit.prepare())
+        .fetch {
+            it.into(FILM).toDto()
+        }
 }

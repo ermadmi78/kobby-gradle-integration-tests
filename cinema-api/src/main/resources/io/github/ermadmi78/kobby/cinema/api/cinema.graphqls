@@ -1,7 +1,3 @@
-directive @primaryKey on FIELD_DEFINITION
-directive @required on FIELD_DEFINITION
-directive @default on FIELD_DEFINITION
-directive @selection on FIELD_DEFINITION
 directive @resolve on FIELD_DEFINITION
 
 scalar JSON
@@ -10,6 +6,7 @@ scalar Date
 schema {
     query: Query
     mutation: Mutation
+    subscription: Subscription
 }
 
 type Query {
@@ -39,7 +36,7 @@ type Query {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Film!]! @selection
+    ): [Film!]!
 
     # Find actor by id. Returns null if not found.
     actor(id: ID!): Actor
@@ -60,7 +57,7 @@ type Query {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Actor!]! @selection
+    ): [Actor!]!
 
     # Find entities by tag
     taggable(tag: String!): [Taggable!]!
@@ -83,7 +80,7 @@ type Mutation {
 
         # Add tag to film if tag is not null
         tags: TagInput
-    ): Film! @selection
+    ): Film!
 
     # Create actor
     createActor(
@@ -95,7 +92,7 @@ type Mutation {
 
         # Add tag to actor if tag is not null
         tags: TagInput
-    ): Actor! @selection
+    ): Actor!
 
     # Associate film with actor
     associate(
@@ -136,13 +133,13 @@ type Subscription {
 # Base interface for all entities.
 interface Entity {
     # Unique identifier of entity
-    id: ID! @primaryKey
+    id: ID!
 
     # Fields of entity in key-value map. Introduced for testing complex scalars.
     fields(
         # List of field keys to load. If no keys specified all entity fields will be loaded.
         keys: [String!]
-    ): JSON! @selection
+    ): JSON!
 }
 
 # Entity with tags. Introduced for testing complex inheritance.
@@ -160,7 +157,7 @@ type Country implements Entity {
     fields(keys: [String!]): JSON!
 
     # The name of the country
-    name: String! @default
+    name: String!
 
     # Find film by id. Returns null if not found.
     film(id: ID!): Film
@@ -175,7 +172,7 @@ type Country implements Entity {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Film!]! @selection
+    ): [Film!]!
 
     # Find actor by id. Returns null if not found.
     actor(id: ID!): Actor
@@ -196,7 +193,7 @@ type Country implements Entity {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Actor!]! @selection
+    ): [Actor!]!
 
     # Find entities of this country by tag
     taggable(tag: String!): [Taggable!]!
@@ -212,13 +209,13 @@ type Film implements Entity, Taggable {
     tags: [Tag!]!
 
     # Title of film
-    title: String! @default
+    title: String!
 
     # Genre of film.
     genre: Genre!
 
     # ID of the country to which the film belongs
-    countryId: ID! @required
+    countryId: ID!
 
     # The country to which the film belongs
     country: Country! @resolve
@@ -239,7 +236,7 @@ type Film implements Entity, Taggable {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Actor!]! @selection
+    ): [Actor!]!
 }
 
 # Enum of available film genres
@@ -274,19 +271,19 @@ type Actor implements Entity, Taggable {
     tags: [Tag!]!
 
     # First name of actor. I assume all actors have a first name - so field is not null.
-    firstName: String! @default
+    firstName: String!
 
     # Surname of the actor. This field is nullable because the actor can use an alias and not have a last name.
-    lastName: String @default
+    lastName: String
 
     # Actor's birthday
-    birthday: Date! @required
+    birthday: Date!
 
     # Actor's gender
     gender: Gender!
 
     # ID of the country to which the actor belongs (@primaryKey added to test complex primary keys)
-    countryId: ID! @primaryKey
+    countryId: ID!
 
     # The country to which the actor belongs
     country: Country! @resolve
@@ -301,7 +298,7 @@ type Actor implements Entity, Taggable {
         limit: Int! = 10,
         # Offset of result list.
         offset: Int! = 0
-    ): [Film!]! @selection
+    ): [Film!]!
 }
 
 # The gender of the actor
