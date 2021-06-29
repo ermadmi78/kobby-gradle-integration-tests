@@ -5,7 +5,7 @@ description = "Cinema API Example"
 plugins {
     kotlin("jvm")
     `java-library`
-    id("io.github.ermadmi78.kobby") version "1.0.0-beta.06"
+    id("io.github.ermadmi78.kobby") version "1.0.0-beta.07"
 }
 
 kobby {
@@ -19,7 +19,7 @@ kobby {
 
 val kotlinJvmVersion: String by project
 tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compileKotlin {
         kotlinOptions {
             jvmTarget = kotlinJvmVersion
             freeCompilerArgs = listOf("-Xjsr305=strict")
