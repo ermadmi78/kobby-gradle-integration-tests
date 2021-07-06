@@ -149,6 +149,10 @@ dependencies {
                 "playground-spring-boot-starter:$graphqlJavaKickstartVersion"
     )
     implementation(
+        "com.graphql-java-kickstart:" +
+                "voyager-spring-boot-starter:$graphqlJavaKickstartVersion"
+    )
+    implementation(
         "com.graphql-java:" +
                 "graphql-java-extended-scalars:$graphqlJavaExtendedScalarsVersion"
     ) {
