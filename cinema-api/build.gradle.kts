@@ -5,7 +5,7 @@ description = "Cinema API Example"
 plugins {
     kotlin("jvm")
     `java-library`
-    id("io.github.ermadmi78.kobby") version "1.0.0-beta.07"
+    id("io.github.ermadmi78.kobby") version "1.0.0-beta.08"
 }
 
 kobby {
@@ -29,7 +29,7 @@ tasks {
 
 val jacksonVersion: String by project
 val ktorVersion: String by project
-val graphqlJavaKickstartVersion: String by project
+val graphqlJavaToolsVersion: String by project
 val reactivestreamsVersion: String by project
 val kotlinVersion: String by project
 dependencies {
@@ -40,7 +40,7 @@ dependencies {
     compileOnly("io.ktor:ktor-client-cio:$ktorVersion")
 
     // Add this dependency to enable graphql-java-kickstart resolvers generation by Kobby
-    compileOnly("com.graphql-java-kickstart:graphql-java-tools:$graphqlJavaKickstartVersion")
+    compileOnly("com.graphql-java-kickstart:graphql-java-tools:$graphqlJavaToolsVersion")
 
     // Add this dependency to enable subscription resolver publisher generation
     compileOnly("org.reactivestreams:reactive-streams:$reactivestreamsVersion")
