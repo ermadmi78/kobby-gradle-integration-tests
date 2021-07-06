@@ -26,3 +26,11 @@ graphiql:
     enabled: false
   headers:
     Authorization: Basic YWRtaW46YWRtaW4=
+
+---
+graphql.playground:
+  enabled: true
+  cdn:
+    enabled: false
+  headers:
+    Authorization: Basic YWRtaW46YWRtaW4=
